@@ -1,0 +1,9 @@
+<!-- 作成日: 2026-07-18 / 作成担当: Codex -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="灯り帳">
+  <rect width="128" height="128" rx="28" fill="#171d2a"/>
+  <path d="M31 22h55c7 0 12 5 12 12v72H42c-6 0-11-5-11-11V22Z" fill="#293246" stroke="#5f5472" stroke-width="4"/>
+  <path d="M42 22v84" stroke="#151a26" stroke-width="5"/>
+  <path d="M80 22v43l-8-6-8 6V22" fill="#76526f"/>
+  <circle cx="72" cy="84" r="8" fill="#e8c77d"/>
+  <circle cx="72" cy="84" r="14" fill="#e8c77d" opacity=".16"/>
+</svg>

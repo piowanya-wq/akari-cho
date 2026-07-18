@@ -1,0 +1,4 @@
+# 作成日: 2026-07-19 / 作成担当: Codex
+node_modules/
+dist/
+.DS_Store
