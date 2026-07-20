@@ -1,5 +1,5 @@
 // 作成日: 2026-07-18 / 作成担当: Codex
-// 最終更新日: 2026-07-20 (Codex / Claude Code) — 生活を採点しない、端末内だけの帳面。
+// 最終更新日: 2026-07-21 (Codex) — 日付をまたいだら前日の書きかけを残して今日の頁へ移る。
 import { useEffect, useMemo, useRef, useState } from "react";
 import { db, blankEntry, extras, type AkariSettings, type LifeEntry } from "./db";
 
