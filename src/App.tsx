@@ -5,7 +5,10 @@ import { db, blankEntry, extras, type AkariSettings, type LifeEntry } from "./db
 
 type Page = "home" | "record" | "past" | "share" | "settings" | "clinic";
 const prompts = ["外出したこと、デイケア、AI開発、楽しかったこと、困ったこと、明日のこと……", "今日、手元に残しておきたいこと……", "できたことも、できなかったことも、そのまま……"];
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+};
 const displayDate = (date: string) => new Intl.DateTimeFormat("ja-JP", { month: "long", day: "numeric", weekday: "short" }).format(new Date(`${date}T12:00:00`));
 const timeChoices = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, "0")}:${i % 2 ? "30" : "00"}`);
 
@@ -28,6 +31,25 @@ export default function App() {
   }
   useEffect(() => { void load(); }, []);
   useEffect(() => { const found = entries.find((entry) => entry.date === activeDate); setDraft(found ? structuredClone(found) : blankEntry(activeDate)); }, [activeDate, entries]);
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const now = new Date();
+      const yesterday = new Date(now);
+      yesterday.setDate(now.getDate() - 1);
+      const yesterdayDate = new Date(yesterday.getTime() - yesterday.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+      const nextDate = today();
+      if (page !== "record" || activeDate !== yesterdayDate || activeDate === nextDate) return;
+
+      const existing = entries.find((entry) => entry.date === activeDate);
+      if (isMeaningful(draft) || existing) {
+        const record = { ...draft, createdAt: existing?.createdAt ?? new Date().toISOString(), updatedAt: new Date().toISOString() };
+        void db.entries.put(record).then(() => load());
+      }
+      setActiveDate(nextDate);
+      setNotice("日付が変わったから、前の頁を残して今日の頁をひらいたよ。");
+    }, 30_000);
+    return () => window.clearInterval(timer);
+  }, [activeDate, draft, entries, page]);
 
   const enabledExtras = extras.filter(([key]) => settings.enabledExtras[key]);
   const current = entries.find((entry) => entry.date === today());
