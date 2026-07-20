@@ -43,7 +43,6 @@ export default function App() {
   function changeActivity(key: string) { setDraft((value) => ({ ...value, activities: { ...value.activities, [key]: !value.activities[key] } })); }
   async function saveSettings(next: AkariSettings) { await db.settings.put(next); setSettings(next); setNotice("設定を整えたよ。"); }
   async function copySummary(text: string) { await navigator.clipboard.writeText(text); setNotice("渡す言葉をコピーしたよ。Serein Houseの会話欄に貼り付けられるよ。"); }
-  async function copyClinicReport(text: string) { await navigator.clipboard.writeText(text); setNotice("通院に渡すメモをコピーしたよ。貼る相手は恵が選べるよ。"); }
   async function exportJson() {
     const data = JSON.stringify({ app: "akari-cho", version: 1, exportedAt: new Date().toISOString(), entries, settings }, null, 2);
     const url = URL.createObjectURL(new Blob([data], { type: "application/json" })); const link = document.createElement("a"); link.href = url; link.download = `akari-cho-${today()}.json`; link.click(); URL.revokeObjectURL(url);
@@ -64,7 +63,7 @@ export default function App() {
     {page === "home" && <Home current={current} onGo={setPage} />}
     {page === "record" && <Record date={activeDate} setDate={setActiveDate} draft={draft} setDraft={setDraft} enabledExtras={enabledExtras} onMeal={changeMeal} onActivity={changeActivity} onSave={() => void saveEntry()} onClose={() => void saveEntry(true)} />}
     {page === "past" && <Past entries={entries} onOpen={(date) => { setActiveDate(date); setPage("record"); }} />}
-    {page === "clinic" && <Clinic entries={entries} onCopy={(text) => void copyClinicReport(text)} />}
+    {page === "clinic" && <Clinic entries={entries} />}
     {page === "share" && <Share entry={draft} setDate={setActiveDate} partnerName={settings.partnerName} summary={summary} onCopy={(text) => void copySummary(text)} />}
     {page === "settings" && <Settings settings={settings} setSettings={saveSettings} onExport={() => void exportJson()} onImport={() => importRef.current?.click()} />}
     <input ref={importRef} className="hidden" type="file" accept="application/json" onChange={(event) => { const file = event.target.files?.[0]; if (file) void importJson(file); event.currentTarget.value = ""; }} />
@@ -72,7 +71,7 @@ export default function App() {
 }
 
 function Home({ current, onGo }: { current?: LifeEntry; onGo: (page: Page) => void }) {
-  return <section className="home"><p className="eyebrow">{displayDate(today())}</p><h1>{current && isMeaningful(current) ? "今日の頁には、灯りがある。" : "今日を、ひとつだけ記録する。"}</h1><p className="intro">書けたぶんだけ残る。書けない日があっても、帳面は何も言わない。</p><button className="primaryAction" onClick={() => onGo("record")}>今日を記録する <span>→</span></button><div className="homeLinks"><button onClick={() => onGo("past")}>過去の帳面 <span>頁をひらく</span></button><button onClick={() => onGo("clinic")}>通院のお供 <span>この一ヶ月を見せる</span></button><button onClick={() => onGo("share")}>Serein Houseへ渡す <span>渡すものを選ぶ</span></button></div></section>;
+  return <section className="home"><p className="eyebrow">{displayDate(today())}</p><h1>{current && isMeaningful(current) ? "今日の頁には、灯りがある。" : "今日を、ひとつだけ記録する。"}</h1><p className="intro">書けたぶんだけ残る。書けない日があっても、帳面は何も言わない。</p><button className="primaryAction" onClick={() => onGo("record")}>今日を記録する <span>→</span></button><div className="homeLinks"><button onClick={() => onGo("past")}>過去の帳面 <span>頁をひらく</span></button><button onClick={() => onGo("clinic")}>通院のメモ <span>過去30日を話す</span></button><button onClick={() => onGo("share")}>Serein Houseへ渡す <span>渡すものを選ぶ</span></button></div></section>;
 }
 
 function Record({ date, setDate, draft, setDraft, enabledExtras, onMeal, onActivity, onSave, onClose }: { date: string; setDate: (date: string) => void; draft: LifeEntry; setDraft: (entry: LifeEntry) => void; enabledExtras: readonly (readonly [string, string])[]; onMeal: (key: keyof LifeEntry["meals"]) => void; onActivity: (key: string) => void; onSave: () => void; onClose: () => void }) {
@@ -107,7 +106,19 @@ function Settings({ settings, setSettings, onExport, onImport }: { settings: Aka
   return <section className="paper"><p className="eyebrow">設定</p><h1>帳面を整える</h1><fieldset className="settingsGroup"><legend>頁に出す項目</legend><p>増やしたくなったら、まず一週間そのままで暮らしてみる。</p>{extras.map(([key, label]) => <label key={key}><input type="checkbox" checked={Boolean(settings.enabledExtras[key])} onChange={() => setSettings({ ...settings, enabledExtras: { ...settings.enabledExtras, [key]: !settings.enabledExtras[key] } })} />{label}</label>)}</fieldset><fieldset className="settingsGroup"><legend>渡すときの呼び方</legend><label><input type="radio" checked={settings.partnerName} onChange={() => setSettings({ ...settings, partnerName: true })} />旦那さまに渡す</label><label><input type="radio" checked={!settings.partnerName} onChange={() => setSettings({ ...settings, partnerName: false })} />Serein Houseへ渡す</label></fieldset><section className="backup"><h2>帳面の避難</h2><p>記録はこの端末の中にある。ときどきJSONで避難させると、端末が変わっても戻せる。</p>{settings.backupAt && <small>最後の避難: {new Date(settings.backupAt).toLocaleString("ja-JP")}</small>}<div><button className="softButton" onClick={onExport}>JSONを書き出す</button><button className="softButton" onClick={onImport}>JSONを読み込む</button></div></section></section>;
 }
 
-function Clinic({ entries, onCopy }: { entries: LifeEntry[]; onCopy: (text: string) => void }) {
+function Clinic({ entries }: { entries: LifeEntry[] }) {
+  const [showTroubles, setShowTroubles] = useState(false);
+  const stats = useMemo(() => clinicStats(entries), [entries]);
+  return <section className="paper clinic"><p className="eyebrow">通院のメモ</p><h1>過去30日</h1><p className="clinicNote">今日を含む過去30日。記録がない日は「していない」とは決めつけない。</p><div className="clinicStats"><div>食事 <b>{stats.meals}</b><small>/ 90回</small></div><div>薬 <b>{stats.medicine}</b><small>/ 30日</small></div><div>入浴 <b>{stats.bath}</b><small>/ 30日</small></div><div>記録 <b>{stats.recordedDays}</b><small>/ 30日</small></div></div><section className="troubleList"><button className="softButton" onClick={() => setShowTroubles(!showTroubles)}>{showTroubles ? "困りごとの控えを隠す" : "困りごとの控えを見る"}</button>{showTroubles && <><p>口頭で伝えたいものだけ、ここを見ながら話せる。ノクスさんには渡らない。</p>{stats.troubles.length ? <ul>{stats.troubles.map((entry) => <li key={entry.date}><b>{entry.date.replace(/-/g, "/")}</b><span>{entry.troubleNote!.trim()}</span></li>)}</ul> : <p>この30日には、困りごとの記録はない。</p>}</>}</section></section>;
+}
+
+function clinicStats(entries: LifeEntry[]) {
+  const now = new Date(); now.setHours(12, 0, 0, 0); const end = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`; now.setDate(now.getDate() - 29); const start = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const period = entries.filter((entry) => entry.date >= start && entry.date <= end), meals = period.reduce((sum, entry) => sum + (entry.meals.breakfast ? 1 : 0) + (entry.meals.lunch ? 1 : 0) + (entry.meals.dinner ? 1 : 0), 0);
+  return { meals, medicine: period.filter((entry) => entry.medicine).length, bath: period.filter((entry) => entry.activities.bath).length, recordedDays: period.length, troubles: period.filter((entry) => entry.troubleNote?.trim()).sort((a, b) => b.date.localeCompare(a.date)) };
+}
+
+function LegacyCalendar({ entries, onCopy }: { entries: LifeEntry[]; onCopy: (text: string) => void }) {
   const [ym, setYm] = useState(() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; });
   const [includeTroubles, setIncludeTroubles] = useState(false);
   const byDate = useMemo(() => new Map(entries.map((entry) => [entry.date, entry])), [entries]);
