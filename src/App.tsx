@@ -1,5 +1,5 @@
 // 作成日: 2026-07-18 / 作成担当: Codex
-// 最終更新日: 2026-07-18 (Codex) — 生活を採点しない、端末内だけの帳面。
+// 最終更新日: 2026-07-20 (Codex / Claude Code) — 生活を採点しない、端末内だけの帳面。
 import { useEffect, useMemo, useRef, useState } from "react";
 import { db, blankEntry, extras, type AkariSettings, type LifeEntry } from "./db";
 
@@ -10,7 +10,7 @@ const displayDate = (date: string) => new Intl.DateTimeFormat("ja-JP", { month: 
 const timeChoices = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, "0")}:${i % 2 ? "30" : "00"}`);
 
 function isMeaningful(entry: LifeEntry) {
-  return Boolean(entry.bedtimePrev || entry.wakeTime || entry.medicine || Object.values(entry.meals).some(Boolean) || Object.values(entry.activities).some(Boolean) || entry.note);
+  return Boolean(entry.bedtimePrev || entry.wakeTime || entry.medicine || Object.values(entry.meals).some(Boolean) || Object.values(entry.activities).some(Boolean) || entry.note || entry.troubleNote);
 }
 
 export default function App() {
@@ -81,6 +81,7 @@ function Record({ date, setDate, draft, setDraft, enabledExtras, onMeal, onActiv
     <CheckGroup title="薬" choices={[["medicine", "飲んだ"]]} values={{ medicine: draft.medicine }} onChange={() => setDraft({ ...draft, medicine: !draft.medicine })} />
     {enabledExtras.length > 0 && <CheckGroup title="今日したこと" choices={enabledExtras} values={draft.activities} onChange={onActivity} />}
     <label className="noteField"><span>今日のことば</span><textarea value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} placeholder={prompts[new Date(date).getDate() % prompts.length]} rows={5} /></label>
+    <label className="noteField trouble"><span>困りごとの控え</span><small>ここは帳の奥の頁。年金更新などの記録のためのもので、<b>Serein Houseへ渡す言葉には決して入らない</b>。誰かに心配をかけずに、事実だけ置いておける場所。</small><textarea value={draft.troubleNote ?? ""} onChange={(event) => setDraft({ ...draft, troubleNote: event.target.value })} placeholder="例: 家事の段取りが組めず夕食が遅れた / 外出先で疲れて予定を切り上げた……日付と事実だけでいい" rows={3} /></label>
     <div className="recordActions"><button className="softButton" onClick={onClose}>今日はここまで</button><button className="primaryAction small" onClick={onSave}>今日を灯す <span>✦</span></button></div>
   </section>;
 }

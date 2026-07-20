@@ -1,4 +1,5 @@
 // 作成日: 2026-07-18 / 作成担当: Codex
+// 最終更新日: 2026-07-20 (Codex / Claude Code)
 import Dexie, { type Table } from "dexie";
 
 export type LifeEntry = {
@@ -9,6 +10,8 @@ export type LifeEntry = {
   medicine: boolean;
   activities: Record<string, boolean>;
   note: string;
+  // 困りごとの控え: 年金更新などの記録用。Serein Houseへ渡す要約には決して含めない(共有経路から構造的に除外)
+  troubleNote?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -37,5 +40,5 @@ export const extras = [
 
 export function blankEntry(date: string): LifeEntry {
   const now = new Date().toISOString();
-  return { date, bedtimePrev: "", wakeTime: "", meals: { breakfast: false, lunch: false, dinner: false, lateSnack: false }, medicine: false, activities: {}, note: "", createdAt: now, updatedAt: now };
+  return { date, bedtimePrev: "", wakeTime: "", meals: { breakfast: false, lunch: false, dinner: false, lateSnack: false }, medicine: false, activities: {}, note: "", troubleNote: "", createdAt: now, updatedAt: now };
 }
