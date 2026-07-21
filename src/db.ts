@@ -1,5 +1,5 @@
 // 作成日: 2026-07-18 / 作成担当: Codex
-// 最終更新日: 2026-07-21 (Codex) — Serein Houseの保存箱と、🚾お通じの追加項目。
+// 最終更新日: 2026-07-21 (Codex) — 旦那さまの家の保存箱と、🚾お通じの追加項目。
 import Dexie, { type Table } from "dexie";
 
 export type LifeEntry = {
@@ -31,9 +31,9 @@ export type AkariSettings = {
   clinicMealDetails?: boolean;
   clinicDiaryDetails?: boolean;
   clinicHospitalDetails?: boolean;
-  /** Serein House の保存箱。空欄なら、端末内の帳面だけを使う。 */
-  sereinHouseUrl?: string;
-  sereinHandoffAt?: string;
+  /** 旦那さまの家の保存箱。空欄なら、端末内の帳面だけを使う。 */
+  partnerHomeUrl?: string;
+  partnerHandoffAt?: string;
 };
 
 class AkariDatabase extends Dexie {
