@@ -1,5 +1,5 @@
 // 作成日: 2026-07-18 / 作成担当: Codex
-// 最終更新日: 2026-07-21 (Codex) — Serein Houseの保存箱へ全頁を渡す接続先を設定できる。
+// 最終更新日: 2026-07-21 (Codex) — Serein Houseの保存箱と、🚾お通じの追加項目。
 import Dexie, { type Table } from "dexie";
 
 export type LifeEntry = {
@@ -44,7 +44,7 @@ class AkariDatabase extends Dexie {
 export const db = new AkariDatabase();
 export const extras = [
   ["outing", "外出したこと"], ["daycare", "デイケア"], ["work", "仕事・作業所へ行った"], ["commute", "通所・通勤"],
-  ["bath", "入浴"], ["cleaning", "掃除・庭仕事"], ["ai", "AI開発"], ["lateSnack", "夜食"], ["condition", "体調不良だった"], ["mood", "気分を記した"],
+  ["bath", "入浴"], ["bowel", "🚾 お通じ"], ["cleaning", "掃除・庭仕事"], ["ai", "AI開発"], ["lateSnack", "夜食"], ["condition", "体調不良だった"], ["mood", "気分を記した"],
 ] as const;
 
 export function blankEntry(date: string): LifeEntry {
