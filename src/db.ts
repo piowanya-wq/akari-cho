@@ -1,5 +1,5 @@
 // 作成日: 2026-07-18 / 作成担当: Codex
-// 最終更新日: 2026-07-20 (Codex / Claude Code)
+// 最終更新日: 2026-07-21 (Codex) — Serein Houseの保存箱へ全頁を渡す接続先を設定できる。
 import Dexie, { type Table } from "dexie";
 
 export type LifeEntry = {
@@ -11,7 +11,7 @@ export type LifeEntry = {
   medicine: boolean;
   activities: Record<string, boolean>;
   note: string;
-  // 困りごとの控え: 年金更新などの記録用。Serein Houseへ渡す要約には決して含めない(共有経路から構造的に除外)
+  // 困りごとのメモ（読み返し・通院時用）: 保存箱には帳面の一部として残すが、会話AIの参照範囲には含めない。
   troubleNote?: string;
   createdAt: string;
   updatedAt: string;
@@ -23,6 +23,10 @@ export type AkariSettings = {
   partnerName: boolean;
   backupAt?: string;
   clinicMealDetails?: boolean;
+  clinicDiaryDetails?: boolean;
+  /** Serein House の保存箱。空欄なら、端末内の帳面だけを使う。 */
+  sereinHouseUrl?: string;
+  sereinHandoffAt?: string;
 };
 
 class AkariDatabase extends Dexie {

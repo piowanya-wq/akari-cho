@@ -4,7 +4,7 @@
 /* 通院のメモ — 追記 2026-07-20 (Codex)。月初でなく通院日から遡る30日表示。 */
 .clinicNote{color:var(--muted);font-size:12px;line-height:1.7}
 .clinicStats{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:20px 0}.clinicStats div{padding:14px;border:1px solid var(--line);border-radius:7px;background:#fffdf7;color:var(--ink)}.clinicStats b{display:block;margin-top:3px;color:var(--grape);font-size:27px;font-weight:500}.clinicStats small{color:var(--muted);font-size:12px}.troubleList{border-top:1px solid var(--line);padding-top:20px}.troubleList p{color:var(--muted);font-size:13px;line-height:1.7}.troubleList ul{list-style:none;margin:14px 0 0;padding:0}.troubleList li{padding:12px 0;border-bottom:1px solid var(--line)}.troubleList li b{display:block;color:var(--grape);font-size:13px}.troubleList li span{display:block;margin-top:3px;white-space:pre-wrap;line-height:1.75}
-/* 困りごとの控え — 追記 2026-07-20 (Fable5/ヴェルソ) 帳の奥の頁。共有経路(makeSummary/Share)はtroubleNoteに触れないこと */
+/* 困りごとのメモ（読み返し・通院時用） — 追記 2026-07-20 (Fable5/ヴェルソ) 帳の奥の頁。保存と会話AI参照を混同しないこと */
 .noteField.trouble{border-top:1px dashed var(--line)}
 .noteField.trouble>span{color:#70546f}
 .noteField.trouble small{color:var(--muted);font-size:12px;line-height:1.7;margin-top:-4px}
