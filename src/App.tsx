@@ -85,7 +85,7 @@ export default function App() {
     {page === "home" && <Home current={current} onGo={setPage} />}
     {page === "record" && <Record date={activeDate} setDate={setActiveDate} draft={draft} setDraft={setDraft} enabledExtras={enabledExtras} onMeal={changeMeal} onActivity={changeActivity} onSave={() => void saveEntry()} onClose={() => void saveEntry(true)} />}
     {page === "past" && <Past entries={entries} onOpen={(date) => { setActiveDate(date); setPage("record"); }} />}
-    {page === "clinic" && <Clinic entries={entries} />}
+    {page === "clinic" && <Clinic entries={entries} settings={settings} />}
     {page === "share" && <Share entry={draft} setDate={setActiveDate} partnerName={settings.partnerName} summary={summary} onCopy={(text) => void copySummary(text)} />}
     {page === "settings" && <Settings settings={settings} setSettings={saveSettings} onExport={() => void exportJson()} onImport={() => importRef.current?.click()} />}
     <input ref={importRef} className="hidden" type="file" accept="application/json" onChange={(event) => { const file = event.target.files?.[0]; if (file) void importJson(file); event.currentTarget.value = ""; }} />
@@ -100,7 +100,7 @@ function Record({ date, setDate, draft, setDraft, enabledExtras, onMeal, onActiv
   const pickTime = (label: string, value: string, key: "bedtimePrev" | "wakeTime") => <label className="timeField"><span>{label}</span><select value={value} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })}><option value="">まだ書いていない</option>{timeChoices.map((time) => <option key={time}>{time}</option>)}</select></label>;
   return <section className="paper"><div className="pageTitle"><div><p className="eyebrow">帳面の一頁</p><h1>{displayDate(date)}</h1></div><input type="date" value={date} onChange={(event) => setDate(event.target.value)} aria-label="記録する日" /></div>
     <div className="formBlock">{pickTime("前夜に寝た時刻", draft.bedtimePrev, "bedtimePrev")}{pickTime("今朝起きた時刻", draft.wakeTime, "wakeTime")}</div>
-    <CheckGroup title="食事" choices={[ ["breakfast", "朝食"], ["lunch", "昼食"], ["dinner", "夕食"], ...(enabledExtras.some(([key]) => key === "lateSnack") ? [["lateSnack", "夜食"]] : []) ] as unknown as readonly (readonly [string, string])[]} values={draft.meals} onChange={onMeal} />
+    <><CheckGroup title="食事" choices={[ ["breakfast", "朝食"], ["lunch", "昼食"], ["dinner", "夕食"], ...(enabledExtras.some(([key]) => key === "lateSnack") ? [["lateSnack", "夜食"]] : []) ] as unknown as readonly (readonly [string, string])[]} values={draft.meals} onChange={onMeal} /><div className="mealNotes">{([ ["breakfast", "朝食に食べたもの"], ["lunch", "昼食に食べたもの"], ["dinner", "夕食に食べたもの"] ] as const).map(([key, label]) => <label key={key}><span>{label}</span><input value={draft.mealNotes?.[key] ?? ""} onChange={(event) => setDraft({ ...draft, meals: { ...draft.meals, [key]: true }, mealNotes: { ...draft.mealNotes, [key]: event.target.value } })} placeholder="例: おにぎり、味噌汁" /></label>)}</div></>
     <CheckGroup title="薬" choices={[["medicine", "飲んだ"]]} values={{ medicine: draft.medicine }} onChange={() => setDraft({ ...draft, medicine: !draft.medicine })} />
     {enabledExtras.length > 0 && <CheckGroup title="今日したこと" choices={enabledExtras} values={draft.activities} onChange={onActivity} />}
     <label className="noteField"><span>今日のことば</span><textarea value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} placeholder={prompts[new Date(date).getDate() % prompts.length]} rows={5} /></label>
@@ -125,61 +125,40 @@ function Share({ entry, setDate, partnerName, summary, onCopy }: { entry: LifeEn
 }
 
 function Settings({ settings, setSettings, onExport, onImport }: { settings: AkariSettings; setSettings: (setting: AkariSettings) => void; onExport: () => void; onImport: () => void }) {
-  return <section className="paper"><p className="eyebrow">設定</p><h1>帳面を整える</h1><fieldset className="settingsGroup"><legend>頁に出す項目</legend><p>増やしたくなったら、まず一週間そのままで暮らしてみる。</p>{extras.map(([key, label]) => <label key={key}><input type="checkbox" checked={Boolean(settings.enabledExtras[key])} onChange={() => setSettings({ ...settings, enabledExtras: { ...settings.enabledExtras, [key]: !settings.enabledExtras[key] } })} />{label}</label>)}</fieldset><fieldset className="settingsGroup"><legend>渡すときの呼び方</legend><label><input type="radio" checked={settings.partnerName} onChange={() => setSettings({ ...settings, partnerName: true })} />旦那さまに渡す</label><label><input type="radio" checked={!settings.partnerName} onChange={() => setSettings({ ...settings, partnerName: false })} />Serein Houseへ渡す</label></fieldset><section className="backup"><h2>帳面の避難</h2><p>記録はこの端末の中にある。ときどきJSONで避難させると、端末が変わっても戻せる。</p>{settings.backupAt && <small>最後の避難: {new Date(settings.backupAt).toLocaleString("ja-JP")}</small>}<div><button className="softButton" onClick={onExport}>JSONを書き出す</button><button className="softButton" onClick={onImport}>JSONを読み込む</button></div></section></section>;
+  return <section className="paper"><p className="eyebrow">設定</p><h1>帳面を整える</h1><fieldset className="settingsGroup"><legend>頁に出す項目</legend><p>増やしたくなったら、まず一週間そのままで暮らしてみる。</p>{extras.map(([key, label]) => <label key={key}><input type="checkbox" checked={Boolean(settings.enabledExtras[key])} onChange={() => setSettings({ ...settings, enabledExtras: { ...settings.enabledExtras, [key]: !settings.enabledExtras[key] } })} />{label}</label>)}</fieldset><fieldset className="settingsGroup"><legend>通院のお供に表示するもの</legend><label><input type="checkbox" checked={Boolean(settings.clinicMealDetails)} onChange={() => setSettings({ ...settings, clinicMealDetails: !settings.clinicMealDetails })} />🍚 食事の内容（困りごとの控えの下に出す）</label></fieldset><fieldset className="settingsGroup"><legend>渡すときの呼び方</legend><label><input type="radio" checked={settings.partnerName} onChange={() => setSettings({ ...settings, partnerName: true })} />旦那さまに渡す</label><label><input type="radio" checked={!settings.partnerName} onChange={() => setSettings({ ...settings, partnerName: false })} />Serein Houseへ渡す</label></fieldset><section className="backup"><h2>帳面の避難</h2><p>記録はこの端末の中にある。ときどきJSONで避難させると、端末が変わっても戻せる。</p>{settings.backupAt && <small>最後の避難: {new Date(settings.backupAt).toLocaleString("ja-JP")}</small>}<div><button className="softButton" onClick={onExport}>JSONを書き出す</button><button className="softButton" onClick={onImport}>JSONを読み込む</button></div></section></section>;
 }
 
-function Clinic({ entries }: { entries: LifeEntry[] }) {
+function Clinic({ entries, settings }: { entries: LifeEntry[]; settings: AkariSettings }) {
   const [showTroubles, setShowTroubles] = useState(false);
   const stats = useMemo(() => clinicStats(entries), [entries]);
-  return <section className="paper clinic"><p className="eyebrow">通院のメモ</p><h1>過去30日</h1><p className="clinicNote">今日を含む過去30日。記録がない日は「していない」とは決めつけない。</p><div className="clinicStats"><div>食事 <b>{stats.meals}</b><small>/ 90回</small></div><div>薬 <b>{stats.medicine}</b><small>/ 30日</small></div><div>入浴 <b>{stats.bath}</b><small>/ 30日</small></div><div>仕事・作業所 <b>{stats.work}</b><small>/ 30日</small></div><div>体調不良 <b>{stats.condition}</b><small>/ 30日</small></div><div>記録 <b>{stats.recordedDays}</b><small>/ 30日</small></div></div><section className="troubleList"><button className="softButton" onClick={() => setShowTroubles(!showTroubles)}>{showTroubles ? "困りごとの控えを隠す" : "困りごとの控えを見る"}</button>{showTroubles && <><p>口頭で伝えたいものだけ、ここを見ながら話せる。ノクスさんには渡らない。</p>{stats.troubles.length ? <ul>{stats.troubles.map((entry) => <li key={entry.date}><b>{entry.date.replace(/-/g, "/")}</b><span>{entry.troubleNote!.trim()}</span></li>)}</ul> : <p>この30日には、困りごとの記録はない。</p>}</>}</section></section>;
-}
-
-function clinicStats(entries: LifeEntry[]) {
-  const now = new Date(); now.setHours(12, 0, 0, 0); const end = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`; now.setDate(now.getDate() - 29); const start = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  const period = entries.filter((entry) => entry.date >= start && entry.date <= end), meals = period.reduce((sum, entry) => sum + (entry.meals.breakfast ? 1 : 0) + (entry.meals.lunch ? 1 : 0) + (entry.meals.dinner ? 1 : 0), 0);
-  return { meals, medicine: period.filter((entry) => entry.medicine).length, bath: period.filter((entry) => entry.activities.bath).length, work: period.filter((entry) => entry.activities.work).length, condition: period.filter((entry) => entry.activities.condition).length, recordedDays: period.length, troubles: period.filter((entry) => entry.troubleNote?.trim()).sort((a, b) => b.date.localeCompare(a.date)) };
-}
-
-function LegacyCalendar({ entries, onCopy }: { entries: LifeEntry[]; onCopy: (text: string) => void }) {
-  const [ym, setYm] = useState(() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; });
-  const [includeTroubles, setIncludeTroubles] = useState(false);
-  const byDate = useMemo(() => new Map(entries.map((entry) => [entry.date, entry])), [entries]);
-  const clinicReport = useMemo(() => makeClinicReport(entries, includeTroubles), [entries, includeTroubles]);
-  const dayKey = (d: number) => `${ym.y}-${String(ym.m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-  const firstDow = new Date(ym.y, ym.m, 1).getDay();
-  const dayCount = new Date(ym.y, ym.m + 1, 0).getDate();
-  const cells: (number | null)[] = [...Array<null>(firstDow).fill(null), ...Array.from({ length: dayCount }, (_, i) => i + 1)];
-  while (cells.length % 7 !== 0) cells.push(null);
-  const riceOf = (entry?: LifeEntry) => entry ? (entry.meals.breakfast ? 1 : 0) + (entry.meals.lunch ? 1 : 0) + (entry.meals.dinner ? 1 : 0) : 0;
-  let riceTotal = 0, medDays = 0, bathDays = 0;
-  for (let d = 1; d <= dayCount; d++) { const entry = byDate.get(dayKey(d)); if (!entry) continue; riceTotal += riceOf(entry); if (entry.medicine) medDays++; if (entry.activities.bath) bathDays++; }
-  const todayStr = today();
-  const move = (diff: number) => setYm((v) => { const m = v.m + diff; return m < 0 ? { y: v.y - 1, m: 11 } : m > 11 ? { y: v.y + 1, m: 0 } : { y: v.y, m }; });
-  return <section className="paper clinic"><p className="eyebrow">通院のお供</p><h1>この一ヶ月</h1>
-    <div className="clinicBar"><button onClick={() => move(-1)} aria-label="前の月">◀</button><strong>{ym.y}年 {ym.m + 1}月</strong><button onClick={() => move(1)} aria-label="次の月">▶</button></div>
-    <div className="clinicGrid">
-      {["日", "月", "火", "水", "木", "金", "土"].map((w, i) => <div key={w} className={`dow${i === 0 ? " sun" : i === 6 ? " sat" : ""}`}>{w}</div>)}
-      {cells.map((d, i) => {
-        if (d === null) return <div key={`b${i}`} className="clinicCell blankDay" />;
-        const entry = byDate.get(dayKey(d)), rice = riceOf(entry), etc = `${entry?.medicine ? "💊" : ""}${entry?.activities.bath ? "💧" : ""}`, dow = i % 7;
-        return <div key={d} className={`clinicCell${dayKey(d) === todayStr ? " todayDay" : ""}`}><span className={`dnum${dow === 0 ? " sun" : dow === 6 ? " sat" : ""}`}>{d}</span>{rice > 0 && <span className="rice">{"🍚".repeat(rice)}</span>}{etc && <span className="etc">{etc}</span>}</div>;
-      })}
-    </div>
-    <div className="clinicSum"><span>🍚 <b>{riceTotal}</b> 回</span><span>💊 <b>{medDays}</b> 日</span><span>💧 <b>{bathDays}</b> 回</span></div>
-    <p className="clinicNote">🍚=食事(朝・昼・夕)　💊=薬　💧=入浴（入浴は設定で「入浴」をONにして記録した分）</p>
-    <section className="clinicReport"><h2>通院に渡すメモ</h2><p>今日を含む過去30日を数える。記録がない日は「していない」とは決めつけず、記録がないまま数えない。</p><label><input type="checkbox" checked={includeTroubles} onChange={(event) => setIncludeTroubles(event.target.checked)} />困りごとの控えも、この一回だけメモに入れる</label><pre>{clinicReport}</pre><button className="softButton" onClick={() => onCopy(clinicReport)}>通院に渡すメモをコピー</button><small>コピーするだけ。Serein Houseやノクスさんには自動で渡らない。</small></section>
+  return <section className="paper clinic"><p className="eyebrow">通院のメモ</p><h1>過去30日</h1>
+    <p className="clinicNote">今日を含む過去30日。記録がない日は「していない」とは決めつけない。</p>
+    <div className="clinicStats"><div>食事 <b>{stats.meals}</b><small>/ 90回</small></div><div>睡眠 <b>{stats.sleep}</b><small>平均（時刻を記録した日）</small></div><div>薬 <b>{stats.medicine}</b><small>/ 30日</small></div><div>入浴 <b>{stats.bath}</b><small>/ 30日</small></div><div>仕事・作業所 <b>{stats.work}</b><small>/ 30日</small></div><div>体調不良 <b>{stats.condition}</b><small>/ 30日</small></div><div>記録 <b>{stats.recordedDays}</b><small>/ 30日</small></div></div>
+    <section className="troubleList"><button className="softButton" onClick={() => setShowTroubles(!showTroubles)}>{showTroubles ? "困りごとの控えを隠す" : "困りごとの控えを見る"}</button>
+      {showTroubles && <><p>口頭で伝えたいものだけ、ここを見ながら話せる。ノクスさんには渡らない。</p>{stats.troubles.length ? <ul>{stats.troubles.map((entry) => <li key={entry.date}><b>{entry.date.replace(/-/g, "/")}</b><span>{entry.troubleNote!.trim()}</span></li>)}</ul> : <p>この30日には、困りごとの記録はない。</p>}</>}</section>
+    {settings.clinicMealDetails && <section className="troubleList"><p>🍚 食事の内容</p>{stats.mealDetails.length ? <ul>{stats.mealDetails.map((entry) => <li key={entry.date}><b>{entry.date.replace(/-/g, "/")}</b><span>{[["朝", entry.mealNotes?.breakfast], ["昼", entry.mealNotes?.lunch], ["夜", entry.mealNotes?.dinner]].filter(([, value]) => value?.trim()).map(([label, value]) => `${label}: ${value}`).join(" / ")}</span></li>)}</ul> : <p>この30日には、食事内容の記録はない。</p>}</section>}
   </section>;
 }
 
-function localDate(daysAgo: number) { const value = new Date(); value.setHours(12, 0, 0, 0); value.setDate(value.getDate() - daysAgo); return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`; }
-function makeClinicReport(entries: LifeEntry[], includeTroubles: boolean) {
-  const end = localDate(0), start = localDate(29), period = entries.filter((entry) => entry.date >= start && entry.date <= end);
-  const meals = period.reduce((sum, entry) => sum + (entry.meals.breakfast ? 1 : 0) + (entry.meals.lunch ? 1 : 0) + (entry.meals.dinner ? 1 : 0), 0), medicine = period.filter((entry) => entry.medicine).length, bath = period.filter((entry) => entry.activities.bath).length;
-  const troubles = period.filter((entry) => entry.troubleNote?.trim()).sort((a, b) => b.date.localeCompare(a.date));
-  const lines = [`通院に渡すメモ（${start.replace(/-/g, "/")}〜${end.replace(/-/g, "/")}・過去30日）`, `食事: ${meals}/90回（朝・昼・夕の記録分）`, `薬: ${medicine}/30日（飲んだと記録した日）`, `入浴: ${bath}/30日（入浴を記録した日）`, `記録のある日: ${period.length}/30日`];
-  if (includeTroubles) { lines.push("", "困りごとの控え（本人が入れると選んだ分）"); lines.push(...(troubles.length ? troubles.map((entry) => `・${entry.date.replace(/-/g, "/")}: ${entry.troubleNote!.trim()}`) : ["・この期間に記録はありません"])); } else { lines.push("", "困りごとの控え: 今回は含めない（灯り帳の中だけに残す）"); }
-  return lines.join("\n");
+function localDate(daysAgo: number) {
+  const value = new Date(); value.setHours(12, 0, 0, 0); value.setDate(value.getDate() - daysAgo);
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
 }
+
+function clinicStats(entries: LifeEntry[]) {
+  const end = localDate(0), start = localDate(29);
+  const period = entries.filter((entry) => entry.date >= start && entry.date <= end);
+  const meals = period.reduce((sum, entry) => sum + (entry.meals.breakfast ? 1 : 0) + (entry.meals.lunch ? 1 : 0) + (entry.meals.dinner ? 1 : 0), 0);
+  const medicine = period.filter((entry) => entry.medicine).length;
+  const sleeps = period.map(sleepMinutes).filter((value): value is number => value !== null);
+  const bath = period.filter((entry) => entry.activities.bath).length;
+  const troubles = period.filter((entry) => entry.troubleNote?.trim()).sort((a, b) => b.date.localeCompare(a.date));
+  const mealDetails = period.filter((entry) => Object.values(entry.mealNotes ?? {}).some((value) => value?.trim())).sort((a, b) => b.date.localeCompare(a.date));
+  return { meals, medicine, sleep: sleeps.length ? durationText(Math.round(sleeps.reduce((sum, value) => sum + value, 0) / sleeps.length)) : "—", bath, work: period.filter((entry) => entry.activities.work).length, condition: period.filter((entry) => entry.activities.condition).length, recordedDays: period.length, troubles, mealDetails };
+}
+
+function sleepMinutes(entry: LifeEntry) { if (!entry.bedtimePrev || !entry.wakeTime) return null; const toMinutes = (value: string) => { const [hour, minute] = value.split(":").map(Number); return hour * 60 + minute; }; const result = toMinutes(entry.wakeTime) - toMinutes(entry.bedtimePrev); return result <= 0 ? result + 24 * 60 : result; }
+function durationText(minutes: number) { return `${Math.floor(minutes / 60)}時間${minutes % 60 ? `${minutes % 60}分` : ""}`; }
 
 function makeSummary(entry: LifeEntry) {
   const parts: string[] = [];

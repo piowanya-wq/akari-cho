@@ -7,6 +7,7 @@ export type LifeEntry = {
   bedtimePrev: string;
   wakeTime: string;
   meals: { breakfast: boolean; lunch: boolean; dinner: boolean; lateSnack: boolean };
+  mealNotes?: Partial<Record<"breakfast" | "lunch" | "dinner", string>>;
   medicine: boolean;
   activities: Record<string, boolean>;
   note: string;
@@ -21,6 +22,7 @@ export type AkariSettings = {
   enabledExtras: Record<string, boolean>;
   partnerName: boolean;
   backupAt?: string;
+  clinicMealDetails?: boolean;
 };
 
 class AkariDatabase extends Dexie {
