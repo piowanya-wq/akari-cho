@@ -66,6 +66,16 @@ export default function App() {
     await db.entries.put(record); await load(); setNotice(close ? "今日はここまで。帳面に小さな灯りを置いたよ。" : "今日を灯したよ。");
     if (close) setPage("home");
   }
+  async function openDate(nextDate: string) {
+    if (nextDate === activeDate) return;
+    const existing = entries.find((entry) => entry.date === activeDate);
+    if (isMeaningful(draft) || existing) {
+      await db.entries.put({ ...draft, createdAt: existing?.createdAt ?? new Date().toISOString(), updatedAt: new Date().toISOString() });
+      await load();
+      setNotice("前の頁を残してから、選んだ日付の頁をひらいたよ。");
+    }
+    setActiveDate(nextDate);
+  }
   function changeMeal(key: keyof LifeEntry["meals"]) { setDraft((value) => ({ ...value, meals: { ...value.meals, [key]: !value.meals[key] } })); }
   function changeActivity(key: string) { setDraft((value) => ({ ...value, activities: { ...value.activities, [key]: !value.activities[key] } })); }
   async function saveSettings(next: AkariSettings) { await db.settings.put(next); setSettings(next); setNotice("設定を整えたよ。項目を外しても、過去の記録は消えないよ。"); }
@@ -124,7 +134,7 @@ export default function App() {
     <header><button className="brand" onClick={() => setPage("home")} aria-label="灯り帳のトップへ"><img src="./icon.svg" /><span>灯り帳<small>一日をそっと閉じる帳面</small></span></button><button className="quietButton" onClick={() => setPage("settings")}>設定</button></header>
     {notice && <p className="notice" role="status">{notice}</p>}
     {page === "home" && <Home current={current} onGo={setPage} />}
-    {page === "record" && <Record entries={entries} date={activeDate} setDate={setActiveDate} draft={draft} setDraft={setDraft} visible={visible} enabledExtras={enabledExtras} customItems={settings.customItems ?? []} onMeal={changeMeal} onActivity={changeActivity} onSave={() => void saveEntry()} onClose={() => void saveEntry(true)} />}
+    {page === "record" && <Record entries={entries} date={activeDate} setDate={(date) => void openDate(date)} draft={draft} setDraft={setDraft} visible={visible} enabledExtras={enabledExtras} customItems={settings.customItems ?? []} onMeal={changeMeal} onActivity={changeActivity} onSave={() => void saveEntry()} onClose={() => void saveEntry(true)} />}
     {page === "past" && <Past entries={entries} onOpen={(date) => { setActiveDate(date); setPage("record"); }} />}
     {page === "clinic" && <Clinic entries={entries} settings={settings} />}
     {page === "settings" && <Settings settings={settings} entries={entries} setSettings={saveSettings} onExport={() => void exportJson()} onImport={() => importRef.current?.click()} onHandoff={() => void handoffToPartnerHome()} onDeleteBefore={(date) => void deleteBefore(date)} onRename={(oldName, newName) => void renameCustomItem(oldName, newName)} />}
