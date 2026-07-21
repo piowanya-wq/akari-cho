@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { db, blankEntry, extras, type AkariSettings, type LifeEntry } from "./db";
 
-type Page = "home" | "record" | "past" | "settings" | "clinic";
+type Page = "home" | "record" | "past" | "calendar" | "settings" | "clinic";
 type Theme = "night" | "paper" | "forest" | "rose";
 const coreItems = [["sleep", "💤 寝た・🌞 起きた時刻"], ["meals", "🍚 食事"], ["note", "📕 今日のことば"], ["hospital", "🏥 病院で言われたこと"], ["trouble", "✋ 困りごとのメモ（読み返し・通院時用）"]] as const;
 const defaultVisible = Object.fromEntries(coreItems.map(([key]) => [key, true])) as Record<string, boolean>;
@@ -135,7 +135,7 @@ export default function App() {
     {notice && <p className="notice" role="status">{notice}</p>}
     {page === "home" && <Home current={current} onGo={setPage} />}
     {page === "record" && <Record entries={entries} date={activeDate} setDate={(date) => void openDate(date)} draft={draft} setDraft={setDraft} visible={visible} enabledExtras={enabledExtras} customItems={settings.customItems ?? []} onMeal={changeMeal} onActivity={changeActivity} onSave={() => void saveEntry()} onClose={() => void saveEntry(true)} />}
-    {page === "past" && <Past entries={entries} onOpen={(date) => { setActiveDate(date); setPage("record"); }} />}
+    {page === "past" && <Past entries={entries} onOpen={(date) => { setActiveDate(date); setPage("record"); }} />}{page === "calendar" && <CalendarPage entries={entries} selected={activeDate} onOpen={(date) => { setActiveDate(date); setPage("record"); }} />}
     {page === "clinic" && <Clinic entries={entries} settings={settings} />}
     {page === "settings" && <Settings settings={settings} entries={entries} setSettings={saveSettings} onExport={() => void exportJson()} onImport={() => importRef.current?.click()} onHandoff={() => void handoffToPartnerHome()} onDeleteBefore={(date) => void deleteBefore(date)} onRename={(oldName, newName) => void renameCustomItem(oldName, newName)} />}
     <input ref={importRef} className="hidden" type="file" accept="application/json" onChange={(event) => { const file = event.target.files?.[0]; if (file) void importJson(file); event.currentTarget.value = ""; }} />
@@ -143,13 +143,13 @@ export default function App() {
 }
 
 function Home({ current, onGo }: { current?: LifeEntry; onGo: (page: Page) => void }) {
-  return <section className="home"><p className="eyebrow">{displayDate(today())}</p><h1>{current && isMeaningful(current) ? "今日の頁には、灯りがある。" : "今日を記録する。"}</h1><p className="intro">書けたぶんだけ残る。書けない日があっても、帳面は何も言わない。</p><button className="primaryAction" onClick={() => onGo("record")}>今日を記録する <span>→</span></button><div className="homeLinks"><button onClick={() => onGo("clinic")}>通院時に見せるメモ <span>過去30日をまとめる</span></button></div></section>;
+  return <section className="home"><p className="eyebrow">{displayDate(today())}</p><h1>{current && isMeaningful(current) ? "今日の頁には、灯りがある。" : "今日を記録する。"}</h1><p className="intro">書けたぶんだけ残る。書けない日があっても、帳面は何も言わない。</p><button className="primaryAction" onClick={() => onGo("record")}>今日を記録する <span>→</span></button><div className="homeLinks"><button onClick={() => onGo("calendar")}>カレンダー <span>記録がある日をひらく</span></button><button onClick={() => onGo("clinic")}>通院時に見せるメモ <span>過去30日をまとめる</span></button></div></section>;
 }
 
 function Record({ entries, date, setDate, draft, setDraft, visible, enabledExtras, customItems, onMeal, onActivity, onSave, onClose }: { entries: LifeEntry[]; date: string; setDate: (date: string) => void; draft: LifeEntry; setDraft: (entry: LifeEntry) => void; visible: Record<string, boolean>; enabledExtras: readonly (readonly [string, string])[]; customItems: string[]; onMeal: (key: keyof LifeEntry["meals"]) => void; onActivity: (key: string) => void; onSave: () => void; onClose: () => void }) {
   const pickTime = (label: string, value: string, key: "bedtimePrev" | "wakeTime") => <label className="timeField"><span>{label}</span><select value={value} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })}><option value="">まだ書いていない</option>{timeChoices.map((time) => <option key={time}>{time}</option>)}</select></label>;
   const mealChoices: readonly (readonly [string, string])[] = [["breakfast", "朝食"], ["lunch", "昼食"], ["dinner", "夕食"], ...(enabledExtras.some(([key]) => key === "lateSnack") ? [["lateSnack", "夜食"] as [string, string]] : [])];
-  return <section className="paper"><div className="pageTitle"><div><p className="eyebrow">帳面の一頁</p><h1>{displayDate(date)}</h1></div><div><input type="date" value={date} onChange={(event) => setDate(event.target.value)} aria-label="記録する日" /><small className="dateHint">過去の日付も、ここで開いて編集できる。</small></div></div><RecordCalendar entries={entries} selected={date} onSelect={setDate} /><div className="recordActions"><button className="softButton" onClick={onClose}>今日はここまで</button><button className="primaryAction small" onClick={onSave}>今日を灯す <span>✦</span></button></div>
+  return <section className="paper"><div className="pageTitle"><div><p className="eyebrow">帳面の一頁</p><h1>{displayDate(date)}</h1></div><div><input type="date" value={date} onChange={(event) => setDate(event.target.value)} aria-label="記録する日" /><small className="dateHint">過去の日付も、ここで開いて編集できる。</small></div></div><div className="recordActions"><button className="softButton" onClick={onClose}>今日はここまで</button><button className="primaryAction small" onClick={onSave}>今日を灯す <span>✦</span></button></div>
     {visible.sleep && <div className="formBlock">{pickTime("前夜に寝た時刻", draft.bedtimePrev, "bedtimePrev")}{pickTime("今朝起きた時刻", draft.wakeTime, "wakeTime")}</div>}
     {visible.meals && <><CheckGroup title="食事" choices={mealChoices} values={draft.meals} onChange={onMeal} /><div className="mealNotes">{([ ["breakfast", "朝食に食べたもの"], ["lunch", "昼食に食べたもの"], ["dinner", "夕食に食べたもの"] ] as const).map(([key, label]) => <label key={key}><span>{label}</span><input value={draft.mealNotes?.[key] ?? ""} onChange={(event) => setDraft({ ...draft, meals: { ...draft.meals, [key]: true }, mealNotes: { ...draft.mealNotes, [key]: event.target.value } })} placeholder="例: おにぎり、味噌汁" /></label>)}</div></>}
     {enabledExtras.length > 0 && <CheckGroup title="今日したこと" choices={enabledExtras} values={draft.activities} onChange={onActivity} />}
@@ -160,6 +160,8 @@ function Record({ entries, date, setDate, draft, setDraft, visible, enabledExtra
     
   </section>;
 }
+
+function CalendarPage({ entries, selected, onOpen }: { entries: LifeEntry[]; selected: string; onOpen: (date: string) => void }) { return <section className="paper"><p className="eyebrow">カレンダー</p><h1>記録した日</h1><RecordCalendar entries={entries} selected={selected} onSelect={onOpen} /></section>; }
 
 function RecordCalendar({ entries, selected, onSelect }: { entries: LifeEntry[]; selected: string; onSelect: (date: string) => void }) {
   const [month, setMonth] = useState(selected.slice(0, 7));
