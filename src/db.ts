@@ -13,6 +13,8 @@ export type LifeEntry = {
   note: string;
   // 困りごとのメモ（読み返し・通院時用）: 保存箱には帳面の一部として残すが、会話AIの参照範囲には含めない。
   troubleNote?: string;
+  /** 診察で受けた説明・次回までの指示。 */
+  hospitalNote?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -24,6 +26,7 @@ export type AkariSettings = {
   backupAt?: string;
   clinicMealDetails?: boolean;
   clinicDiaryDetails?: boolean;
+  clinicHospitalDetails?: boolean;
   /** Serein House の保存箱。空欄なら、端末内の帳面だけを使う。 */
   sereinHouseUrl?: string;
   sereinHandoffAt?: string;
@@ -46,5 +49,5 @@ export const extras = [
 
 export function blankEntry(date: string): LifeEntry {
   const now = new Date().toISOString();
-  return { date, bedtimePrev: "", wakeTime: "", meals: { breakfast: false, lunch: false, dinner: false, lateSnack: false }, medicine: false, activities: {}, note: "", troubleNote: "", createdAt: now, updatedAt: now };
+  return { date, bedtimePrev: "", wakeTime: "", meals: { breakfast: false, lunch: false, dinner: false, lateSnack: false }, medicine: false, activities: {}, note: "", troubleNote: "", hospitalNote: "", createdAt: now, updatedAt: now };
 }
