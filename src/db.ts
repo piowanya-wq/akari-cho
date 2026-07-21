@@ -23,6 +23,9 @@ export type AkariSettings = {
   id: "main";
   enabledExtras: Record<string, boolean>;
   partnerName: boolean;
+  visibleSections?: Record<string, boolean>;
+  customItems?: string[];
+  theme?: "night" | "paper" | "forest" | "rose";
   backupAt?: string;
   clinicMealDetails?: boolean;
   clinicDiaryDetails?: boolean;
@@ -43,8 +46,8 @@ class AkariDatabase extends Dexie {
 
 export const db = new AkariDatabase();
 export const extras = [
-  ["outing", "外出したこと"], ["daycare", "デイケア"], ["work", "仕事・作業所へ行った"], ["commute", "通所・通勤"],
-  ["bath", "入浴"], ["bowel", "🚾 お通じ"], ["cleaning", "掃除・庭仕事"], ["ai", "AI開発"], ["lateSnack", "夜食"], ["condition", "体調不良だった"], ["mood", "気分を記した"],
+  ["outing", "🌤️ お出かけした"], ["daycare", "🚪 デイケア"], ["work", "💼 仕事・作業所へ行った"],
+  ["bath", "💧 入浴"], ["bowel", "🚾 お通じ"], ["cleaning", "🧹 掃除・庭仕事"], ["ai", "💻 AIと開発"], ["lateSnack", "夜食"], ["condition", "🤧 体調不良だった"], ["mood", "気分を記した"],
 ] as const;
 
 export function blankEntry(date: string): LifeEntry {
