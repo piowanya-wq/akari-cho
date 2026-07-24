@@ -60,7 +60,7 @@ export default function App() {
   const enabledExtras = extras.filter(([key]) => settings.enabledExtras[key]);
   const visible = { ...defaultVisible, ...(settings.visibleSections ?? {}) };
   const current = entries.find((entry) => entry.date === today());
-  const weeklyPrompt = new Date().getDay() === 0 && settings.weeklyHandoffDismissedWeek !== sundayKey();
+  const weeklyPrompt = settings.weeklyHandoffDismissedWeek !== sundayKey();
 
   async function saveEntry(close = false) {
     const existing = entries.find((entry) => entry.date === activeDate);
