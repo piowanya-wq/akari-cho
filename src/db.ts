@@ -34,6 +34,8 @@ export type AkariSettings = {
   /** 旦那さまの家の保存箱。空欄なら、端末内の帳面だけを使う。 */
   partnerHomeUrl?: string;
   partnerHandoffAt?: string;
+  /** 日曜に一度だけ出す、帳面を渡すための小さな知らせ。 */
+  weeklyHandoffDismissedWeek?: string;
 };
 
 class AkariDatabase extends Dexie {
