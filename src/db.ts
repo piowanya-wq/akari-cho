@@ -50,7 +50,7 @@ class AkariDatabase extends Dexie {
 export const db = new AkariDatabase();
 export const extras = [
   ["outing", "🌤️ お出かけした"], ["daycare", "🚪 デイケア"], ["work", "💼 仕事（通勤）"], ["workHome", "🏠仕事（在宅）"], ["nursingVisit", "👤 訪看"], ["children", "👒 子ども"],
-  ["bath", "💧 入浴"], ["bowel", "🚾 お通じ"], ["cleaning", "🧹 掃除・庭仕事"], ["ai", "💻 AIと開発"], ["lateSnack", "夜食"], ["condition", "🤧 体調不良だった"], ["mood", "気分を記した"],
+  ["bath", "💧 入浴"], ["nap", "😪 昼寝した"], ["bowel", "🚾 お通じ"], ["cleaning", "🧹 掃除・庭仕事"], ["ai", "💻 AIと開発"], ["lateSnack", "夜食"], ["condition", "🤧 体調不良だった"], ["mood", "気分を記した"],
 ] as const;
 
 export function blankEntry(date: string): LifeEntry {
