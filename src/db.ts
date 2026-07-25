@@ -36,6 +36,8 @@ export type AkariSettings = {
   partnerHandoffAt?: string;
   /** 日曜に一度だけ出す、帳面を渡すための小さな知らせ。 */
   weeklyHandoffDismissedWeek?: string;
+  /** 毎日一度だけ出す、GPT日記の小さな思い出し。 */
+  dailyDiaryDismissedDate?: string;
 };
 
 class AkariDatabase extends Dexie {

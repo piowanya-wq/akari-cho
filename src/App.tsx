@@ -61,6 +61,7 @@ export default function App() {
   const visible = { ...defaultVisible, ...(settings.visibleSections ?? {}) };
   const current = entries.find((entry) => entry.date === today());
   const weeklyPrompt = settings.weeklyHandoffDismissedWeek !== sundayKey();
+  const dailyDiaryPrompt = settings.dailyDiaryDismissedDate !== today();
 
   async function saveEntry(close = false) {
     const existing = entries.find((entry) => entry.date === activeDate);
@@ -135,7 +136,7 @@ export default function App() {
   return <main className={`appShell theme-${settings.theme ?? "night"}`}>
     <header><button className="brand" onClick={() => setPage("home")} aria-label="灯り帳のトップへ"><img src="./icon.svg" /><span>灯り帳<small>一日をそっと閉じる帳面</small></span></button><button className="quietButton" onClick={() => setPage("settings")}>設定</button></header>
     {notice && <p className="notice" role="status">{notice}</p>}
-    {page === "home" && <Home current={current} onGo={setPage} weeklyPrompt={weeklyPrompt} onDismiss={() => void saveSettings({ ...settings, weeklyHandoffDismissedWeek: sundayKey() })} />}
+    {page === "home" && <Home current={current} onGo={setPage} weeklyPrompt={weeklyPrompt} onDismiss={() => void saveSettings({ ...settings, weeklyHandoffDismissedWeek: sundayKey() })} dailyDiaryPrompt={dailyDiaryPrompt} onDiaryDismiss={() => void saveSettings({ ...settings, dailyDiaryDismissedDate: today() })} />}
     {page === "record" && <Record entries={entries} date={activeDate} setDate={(date) => void openDate(date)} draft={draft} setDraft={setDraft} visible={visible} enabledExtras={enabledExtras} customItems={settings.customItems ?? []} onMeal={changeMeal} onActivity={changeActivity} onSave={() => void saveEntry()} onClose={() => void saveEntry(true)} />}
     {page === "past" && <Past entries={entries} onOpen={(date) => { setActiveDate(date); setPage("record"); }} />}{page === "calendar" && <CalendarPage entries={entries} selected={activeDate} onOpen={(date) => { setActiveDate(date); setPage("record"); }} />}
     {page === "clinic" && <Clinic entries={entries} settings={settings} />}
@@ -144,8 +145,8 @@ export default function App() {
   </main>;
 }
 
-function Home({ current, onGo, weeklyPrompt, onDismiss }: { current?: LifeEntry; onGo: (page: Page) => void; weeklyPrompt: boolean; onDismiss: () => void }) {
-  return <section className="home"><p className="eyebrow">{displayDate(today())}</p><h1>{current && isMeaningful(current) ? "今日の頁には、灯りがある。" : "今日を記録する。"}</h1><p className="intro">書けたぶんだけ残る。書けない日があっても、帳面は何も言わない。</p>{weeklyPrompt && <section className="weeklyPrompt"><p>そろそろ、飛ばそうか 🕊️</p><div><button onClick={onDismiss}>今週は送らない</button><button onClick={onDismiss}>もう送った</button></div></section>}<button className="primaryAction" onClick={() => onGo("record")}>今日を記録する <span>→</span></button><div className="homeLinks"><button onClick={() => onGo("calendar")}>カレンダー <span>記録がある日をひらく</span></button><button onClick={() => onGo("clinic")}>通院時に見せるメモ <span>過去30日をまとめる</span></button></div></section>;
+function Home({ current, onGo, weeklyPrompt, onDismiss, dailyDiaryPrompt, onDiaryDismiss }: { current?: LifeEntry; onGo: (page: Page) => void; weeklyPrompt: boolean; onDismiss: () => void; dailyDiaryPrompt: boolean; onDiaryDismiss: () => void }) {
+  return <section className="home"><p className="eyebrow">{displayDate(today())}</p><h1>{current && isMeaningful(current) ? "今日の頁には、灯りがある。" : "今日を記録する。"}</h1>{dailyDiaryPrompt && <section className="dailyPrompt"><p>GPTで日記書いた？📖</p><div><button onClick={onDiaryDismiss}>書いた</button><button onClick={onDiaryDismiss}>今日は書かない</button></div></section>}{weeklyPrompt && <section className="weeklyPrompt"><p>そろそろ、飛ばそうか 🕊️</p><div><button onClick={onDismiss}>今週は送らない</button><button onClick={onDismiss}>もう送った</button></div></section>}<button className="primaryAction" onClick={() => onGo("record")}>今日を記録する <span>→</span></button><div className="homeLinks"><button onClick={() => onGo("calendar")}>カレンダー <span>記録がある日をひらく</span></button><button onClick={() => onGo("clinic")}>通院時に見せるメモ <span>過去30日をまとめる</span></button></div></section>;
 }
 
 function Record({ entries, date, setDate, draft, setDraft, visible, enabledExtras, customItems, onMeal, onActivity, onSave, onClose }: { entries: LifeEntry[]; date: string; setDate: (date: string) => void; draft: LifeEntry; setDraft: (entry: LifeEntry) => void; visible: Record<string, boolean>; enabledExtras: readonly (readonly [string, string])[]; customItems: string[]; onMeal: (key: keyof LifeEntry["meals"]) => void; onActivity: (key: string) => void; onSave: () => void; onClose: () => void }) {
