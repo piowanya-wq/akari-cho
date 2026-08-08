@@ -1,5 +1,5 @@
 // 作成日: 2026-07-18 / 作成担当: Codex
-// 最終更新日: 2026-07-21 (Codex) — 旦那さまの家の保存箱と、🚾お通じの追加項目。
+// 最終更新日: 2026-07-21 (Codex) — 外部の保存先の保存箱と、🚾お通じの追加項目。
 import Dexie, { type Table } from "dexie";
 
 export type LifeEntry = {
@@ -31,7 +31,7 @@ export type AkariSettings = {
   clinicMealDetails?: boolean;
   clinicDiaryDetails?: boolean;
   clinicHospitalDetails?: boolean;
-  /** 旦那さまの家の保存箱。空欄なら、端末内の帳面だけを使う。 */
+  /** 外部の保存先の保存箱。空欄なら、端末内の帳面だけを使う。 */
   partnerHomeUrl?: string;
   partnerHandoffAt?: string;
   /** 日曜に一度だけ出す、帳面を渡すための小さな知らせ。 */
@@ -51,7 +51,7 @@ class AkariDatabase extends Dexie {
 export const db = new AkariDatabase();
 export const extras = [
   ["outing", "🌤️ お出かけした"], ["daycare", "🚪 デイケア"], ["work", "💼 仕事（通勤）"], ["workHome", "🏠仕事（在宅）"], ["nursingVisit", "👤 訪看"], ["children", "👒 子ども"],
-  ["bath", "💧 入浴"], ["nap", "😪 昼寝した"], ["bowel", "🚾 お通じ"], ["cleaning", "🧹 掃除・庭仕事"], ["ai", "💻 AIと開発"], ["lateSnack", "夜食"], ["condition", "🤧 体調不良だった"], ["mood", "気分を記した"],
+  ["bath", "💧 入浴"], ["nap", "😪 昼寝した"], ["period", "🌙 生理"], ["bowel", "🚾 お通じ"], ["cleaning", "🧹 掃除・庭仕事"], ["ai", "💻 AIと開発"], ["lateSnack", "夜食"], ["condition", "🤧 体調不良だった"], ["mood", "気分を記した"],
 ] as const;
 
 export function blankEntry(date: string): LifeEntry {
