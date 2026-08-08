@@ -228,10 +228,11 @@ function addDays(date: string, amount: number) {
 function calculatePeriodSummary(entries: LifeEntry[]) {
   const dates = entries.filter((entry) => entry.activities.period).map((entry) => entry.date).sort();
   const starts = dates.filter((date, index) => index === 0 || !dates.includes(addDays(date, -1)));
-  if (starts.length < 2) return null;
-  const intervals = starts.slice(1).map((date, index) => Math.round((new Date(date + "T12:00:00").getTime() - new Date(starts[index] + "T12:00:00").getTime()) / 86400000));
+  const recentStarts = starts.slice(-5);
+  if (recentStarts.length < 2) return null;
+  const intervals = recentStarts.slice(1).map((date, index) => Math.round((new Date(date + "T12:00:00").getTime() - new Date(recentStarts[index] + "T12:00:00").getTime()) / 86400000));
   const average = Math.round(intervals.reduce((sum, value) => sum + value, 0) / intervals.length);
-  return { average, nextDate: addDays(starts[starts.length - 1], average) };
+  return { average, nextDate: addDays(recentStarts[recentStarts.length - 1], average) };
 }
 
 function clinicDetailText(entries: LifeEntry[], days: number, fields: Record<string, boolean>, custom: string[]) {
